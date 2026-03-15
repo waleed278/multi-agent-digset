@@ -1,0 +1,40 @@
+services:
+  ingestor:
+    build: ./agents/ingestor
+    container_name: agent_ingestor
+    volumes:
+      - ./data:/app/data  # Added /app/ prefix
+    restart: "no"
+  
+  summarizer:
+    build: ./agents/summarizer
+    container_name: agent_summarizer
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      ingestor:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data  # Added /app/ prefix
+    restart: "no"
+
+  prioritizer:
+    build: ./agents/prioritizer
+    container_name: agent_prioritizer
+    depends_on:
+      summarizer:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data  # Added /app/ prefix
+    restart: "no"
+
+  formatter:
+    build: ./agents/formatter
+    container_name: agent_formatter
+    depends_on:
+      prioritizer:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data     # Added /app/ prefix
+      - ./output:/app/output # Added /app/ prefix
+    restart: "no"
